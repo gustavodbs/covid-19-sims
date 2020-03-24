@@ -1,15 +1,17 @@
+"use strict";
+
 // Simulation parameters
-let popSize = 200;
+let popSize = 100;
 let infectedPop = 2;
 let contP = .6;
 
 // Graphic parameters
-let width = 650;
-let height = 1150;
-let indRadius = 4;
+let width = 1250;
+let height = 300;
+let indRadius = 5;
 
 // Execution data
-let individuals = []
+let individuals = [];
 
 
 function setup() {
@@ -24,8 +26,6 @@ function spawnIndividuals() {
       x:random(indRadius, width - indRadius),
       y:random(indRadius, height - indRadius),
       r: indRadius,
-      vx: Math.cos(random(0, Math.PI*2)),
-      vy: Math.sin(random(0, Math.PI*2)),
       infected: i < infectedPop,
     });
     individuals.push(ind)
@@ -35,8 +35,12 @@ function spawnIndividuals() {
 function draw() {
   background(255);
   individuals.forEach(i => {
-    i.collide()
     i.update();
+    individuals.forEach(j => {
+      if (i.id !== j.id) {
+        i.collide(j)
+      }
+    })
     i.display();
   })
 }
