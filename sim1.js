@@ -1,46 +1,59 @@
 "use strict";
 
 // Simulation parameters
-let popSize = 100;
-let infectedPop = 2;
-let contP = .6;
+let popSize = 200;
+let infectedPop = 1;
 
 // Graphic parameters
-let width = 1250;
+let width = 1200;
 let height = 300;
-let indRadius = 5;
+let individualRadius = 5;
+let individualSpeed = 2;
 
 // Execution data
 let individuals = [];
 
-
+// Setup simulation (runs once)
 function setup() {
-  createCanvas(width, height);
-  spawnIndividuals()
+  let canvas = createCanvas(width, height);
+  canvas.parent("simulationContainer");
+  spawnIndividuals();
 }
 
-function spawnIndividuals() {
-  for(let i = 0; i < popSize; i++) {
-    let ind = new Individual({
-      id:i+1,
-      x:random(indRadius, width - indRadius),
-      y:random(indRadius, height - indRadius),
-      r: indRadius,
-      infected: i < infectedPop,
-    });
-    individuals.push(ind)
-  }
-}
-
+// Renders the next simulation state
 function draw() {
   background(255);
   individuals.forEach(i => {
-    i.update();
     individuals.forEach(j => {
-      if (i.id !== j.id) {
-        i.collide(j)
+      if (i.id != j.id) {
+        i.collide(j);
       }
     })
+    i.update();
     i.display();
   })
+}
+
+// Initialize individuals using simulation params
+function spawnIndividuals(){
+  for(let i = 0; i < popSize; i++) {
+    let ind = new Individual({
+      id:i+1,
+      x:random(individualRadius, width - individualRadius),
+      y:random(individualRadius, height - individualRadius),
+      s: individualSpeed,
+      r: individualRadius,
+      infected: i < infectedPop,
+    });
+    var overlaps = false
+    for(let j = 0; j < individuals.length; j++) {
+      if(individuals[j].overlaps(ind)) {
+        overlaps = true;
+        break;
+      }
+    }
+    if(!overlaps){
+      individuals.push(ind)
+    }
+  }
 }

@@ -8,14 +8,18 @@ let statusColors = {
   'death': [51, 51, 51],
 }
 
+function proj(a, b) {
+  return b.mult(a.dot(b) / b.dot(b))
+}
+
 class Individual {
-  constructor({id, x, y, r, infected}) {
+  constructor({id, x, y, r, s, infected}) {
     this.id = id;
     this.pos = createVector(x, y)
-    this.vel = p5.Vector.random2D()
-    this.vel.mult(2)
     this.r = r;
-    this.m = 1;
+    this.speed = s;
+
+    this.vel = p5.Vector.random2D().normalize().mult(this.speed)
     this.status = infected ? 'infected' : 'healthy';
   }
 
@@ -23,80 +27,61 @@ class Individual {
     this.pos.add(this.vel)
   }
 
+  overlaps(i) {
+    return p5.Vector.sub(this.pos, i.pos).mag() < this.r*2;
+  }
+
   collide(i) {
-    var dV = p5.Vector.sub(this.pos, i.pos);
-    var dM = dV.mag();
-    if (dM < this.r*2) {
-      var d = dV.copy();
-      var corV = d.normalize().mult(((this.r*2)-dM)/2.0);
-      i.pos.add(corV);
-      this.pos.sub(corV);
+    var dV = p5.Vector.sub(this.pos, i.pos)
+    var d = dV.mag()
+    if (d < this.r*2) {
+      // Solve static collision first
+      var overlap = .5 * (d - (this.r*2))
+      this.pos.x -= overlap * dV.x / d;
+      this.pos.y -= overlap * dV.y / d;
+      i.pos.x += overlap * dV.x / d;
+      i.pos.y += overlap * dV.y / d;
 
-      // Angles
-      var theta  = dV.heading();
-      var sine = sin(theta);
-      var cosine = cos(theta);
+      // Follows two-dimensional collision ignoring mass: https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
+      var magSqr = dV.magSq()
 
-      /* bTemp will hold rotated ball poss. You 
-       just need to worry about bTemp[1] pos*/
-      var bTemp = [createVector(), createVector()];
-      bTemp[1].x  = cosine * dV.x + sine * dV.y;
-      bTemp[1].y  = cosine * dV.y - sine * dV.x;
+      var v1 = this.vel.copy()
+      var x1 = this.pos.copy()
 
-      // rotate Temporary velocities
-      var vTemp = [createVector(), createVector()];
+      var v2 = i.vel.copy()
+      var x2 = i.pos.copy()
 
-      vTemp[0].x  = cosine * this.vel.x + sine * this.vel.y;
-      vTemp[0].y  = cosine * this.vel.y - sine * this.vel.x;
-      vTemp[1].x  = cosine * i.vel.x + sine * i.vel.y;
-      vTemp[1].y  = cosine * i.vel.y - sine * i.vel.x;
+      var nv1 = p5.Vector.sub(
+        v1,
+        p5.Vector.mult(
+          p5.Vector.sub(x1, x2),
+          p5.Vector.dot(
+            p5.Vector.sub(v1, v2),
+            p5.Vector.sub(x1, x2)
+          )/magSqr
+        )
+      )
+      var nv2 = p5.Vector.sub(
+        v2,
+        p5.Vector.mult(
+          p5.Vector.sub(x2, x1),
+          p5.Vector.dot(
+            p5.Vector.sub(v2, v1),
+            p5.Vector.sub(x2, x1)
+          )/magSqr
+        )
+      )
 
-      /* Now that velocities are rotated, you can use 1D
-       conservation of momentum equations to calculate 
-       the final velocity along the x-axis. */
-      var vFinal = [createVector(), createVector()];
-
-      // final rotated velocity for b[0]
-      vFinal[0].x = ((this.m - i.m) * vTemp[0].x + 2 * i.m * vTemp[1].x) / (this.m + i.m);
-      vFinal[0].y = vTemp[0].y;
-
-      // final rotated velocity for b[0]
-      vFinal[1].x = ((i.m - this.m) * vTemp[1].x + 2 * this.m * vTemp[0].x) / (this.m + i.m);
-      vFinal[1].y = vTemp[1].y;
-
-      // hack to avoid clumping
-      bTemp[0].x += vFinal[0].x;
-      bTemp[1].x += vFinal[1].x;
-
-      /* Rotate ball poss and velocities back
-       Reverse signs in trig expressions to rotate 
-       in the opposite direction */
-      // rotate balls
-      var bFinal = [createVector(), createVector()];
-
-      bFinal[0].x = cosine * bTemp[0].x - sine * bTemp[0].y;
-      bFinal[0].y = cosine * bTemp[0].y + sine * bTemp[0].x;
-      bFinal[1].x = cosine * bTemp[1].x - sine * bTemp[1].y;
-      bFinal[1].y = cosine * bTemp[1].y + sine * bTemp[1].x;
-
-      // update balls to screen pos
-      i.pos.x = this.pos.x + bFinal[1].x;
-      i.pos.y = this.pos.y + bFinal[1].y;
-
-      this.pos.add(bFinal[0]);
-
-      // update velocities
-      this.vel.x = cosine * vFinal[0].x - sine * vFinal[0].y;
-      this.vel.y = cosine * vFinal[0].y + sine * vFinal[0].x;
-      i.vel.x = cosine * vFinal[1].x - sine * vFinal[1].y;
-      i.vel.y = cosine * vFinal[1].y + sine * vFinal[1].x;
+      // Normalization is applied since we only care about direction
+      this.vel = nv1.normalize().mult(this.speed);
+      i.vel = nv2.normalize().mult(i.speed);
     }
   }
 
   display() {
     noStroke();
-    fill(statusColors[this.status])
-    ellipse(this.pos.x, this.pos.y, this.r*2, this.r*2)
+    fill(statusColors[this.status]);
+    ellipse(this.pos.x, this.pos.y, this.r*2, this.r*2);
 
     // Check boundaries
     if(this.pos.x > width-this.r) {
