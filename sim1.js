@@ -36,24 +36,26 @@ function setup() {
 // Initialize individuals using simulation params
 function spawnIndividuals(){
   for(let i = 0; i < popSize; i++) {
-    let ind = new Individual({
-      id:i+1,
-      x:random(individualRadius, width - individualRadius),
-      y:random(individualRadius, height - individualRadius),
-      s: individualSpeed,
-      r: individualRadius,
-      infected: i < infectedPop,
-    });
-    var overlaps = false
-    for(let j = 0; j < individuals.length; j++) {
-      if(individuals[j].overlaps(ind)) {
-        overlaps = true;
-        break;
+    var overlaps = true;
+    while(overlaps) {
+      var ind = new Individual({
+        id:i+1,
+        x:random(individualRadius, width - individualRadius),
+        y:random(individualRadius, height - individualRadius),
+        s: individualSpeed,
+        r: individualRadius,
+        infected: i < infectedPop,
+      });
+      overlaps = false
+      for(let j = 0; j < individuals.length; j++) {
+        if(individuals[j].overlaps(ind)) {
+          overlaps = true;
+          break;
+        }
       }
+
     }
-    if(!overlaps){
-      individuals.push(ind)
-    }
+    individuals.push(ind)
   }
 }
 
@@ -80,19 +82,31 @@ function draw() {
     switch(i.status) {
     case 'healthy':
       healthyCount += 1;
+      break;
     case 'infected':
       infectedCount += 1;
+      break;
     case 'hospitalized':
       hospitalizedCount += 1;
+      break;
     case 'death':
       deathCount += 1;
+      break;
     case 'recovered':
       recoveredCount += 1;
+      break;
     }
   })
 
+  document.getElementById("dayCount").innerHTML = Math.floor(dayCount);
   document.getElementById("popSize").innerHTML = popSize;
   document.getElementById("healthyCount").innerHTML = healthyCount;
-  document.getElementById("infectedCount").innerHTML = infectedCount;
+  document.getElementById("infectedCount").innerHTML = infectedCount + hospitalizedCount;
   document.getElementById("hospitalizedCount").innerHTML = hospitalizedCount;
+  document.getElementById("deathCount").innerHTML = deathCount;
+  document.getElementById("recoveredCount").innerHTML = recoveredCount;
+
+  if (healthyCount === 0 && infectedCount === 0) {
+    noLoop();
+  }
 }

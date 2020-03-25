@@ -49,6 +49,7 @@ class Individual {
       break;
     case 'death':
       this.vel = createVector(0, 0);
+      break;
     }
 
     this.pos.add(this.vel)
