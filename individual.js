@@ -3,7 +3,8 @@
 // Graphic settings
 let statusColors = {
   'healthy': [45, 123, 182],
-  'infected': [237, 34, 93],
+  'infected': [255, 87, 34],
+  'hospitalized': [237, 34, 93],
   'recovered': [187, 170, 204],
   'death': [51, 51, 51],
 }
@@ -21,10 +22,42 @@ class Individual {
 
     this.vel = p5.Vector.random2D().normalize().mult(this.speed)
     this.status = infected ? 'infected' : 'healthy';
+    this.daysInfected = 0;
   }
 
   update() {
     this.pos.add(this.vel)
+    
+    switch(this.status) {
+    case 'infected':
+      this.daysInfected += 0.05
+      if(this.daysInfected > recoveryTime) {
+        var p = Math.random();
+        if (p > hospitalizationProb) {
+          this.status = 'recovered';
+        } else if (p > infectedDeathRate) {
+          this.status = 'hospitalized';
+        } else {
+          this.status = 'death';
+        }
+      }
+      break;
+    case 'hospitalized':
+      this.vel = createVector(0, 0);
+      this.daysInfected += 0.05
+      if(this.daysInfected > hospRecoveryTime) {
+        this.status = Math.random() < hospDeathRate ? 'death' : 'recovered'
+      }
+      break;
+    case 'death':
+      this.vel = createVector(0, 0);
+    }
+  }
+
+  expose() {
+    if (this.status === 'healthy' && Math.random() < infectionProb) {
+      this.status = 'infected'
+    }
   }
 
   overlaps(i) {
@@ -37,10 +70,12 @@ class Individual {
     if (d < this.r*2) {
       // Solve static collision first
       var overlap = .5 * (d - (this.r*2))
-      this.pos.x -= overlap * dV.x / d;
-      this.pos.y -= overlap * dV.y / d;
-      i.pos.x += overlap * dV.x / d;
-      i.pos.y += overlap * dV.y / d;
+      if (this.status != "death" && this.status != "hospitalized") {
+        this.pos.x -= overlap * dV.x / d;
+        this.pos.y -= overlap * dV.y / d;
+        i.pos.x += overlap * dV.x / d;
+        i.pos.y += overlap * dV.y / d;
+      }
 
       // Follows two-dimensional collision ignoring mass: https://en.wikipedia.org/wiki/Elastic_collision#Two-dimensional_collision_with_two_moving_objects
       var magSqr = dV.magSq()
@@ -71,7 +106,6 @@ class Individual {
           )/magSqr
         )
       )
-
       // Normalization is applied since we only care about direction
       this.vel = nv1.normalize().mult(this.speed);
       i.vel = nv2.normalize().mult(i.speed);

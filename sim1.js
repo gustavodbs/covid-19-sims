@@ -1,14 +1,20 @@
 "use strict";
 
 // Simulation parameters
-let popSize = 200;
+let popSize = 150;
 let infectedPop = 1;
+let infectionProb = 0.2;
+let hospitalizationProb = 0.15;
+let infectedDeathRate = 0.01;
+let hospDeathRate = .3;
+let recoveryTime = 14.2; // In days
+let hospRecoveryTime = 30; // In days
 
 // Graphic parameters
 let width = 1200;
 let height = 300;
 let individualRadius = 5;
-let individualSpeed = 2;
+let individualSpeed = 1.5;
 
 // Execution data
 let individuals = [];
@@ -24,12 +30,13 @@ function setup() {
 function draw() {
   background(255);
   individuals.forEach(i => {
+    i.update();
     individuals.forEach(j => {
-      if (i.id != j.id) {
+      if (i.id != j.id && i.overlaps(j)) {
+        i.expose();
         i.collide(j);
       }
     })
-    i.update();
     i.display();
   })
 }
