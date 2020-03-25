@@ -5,14 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>COVID-19 Simulations</title>
   <style>
-    body {
+    #sim {
       display: flex;
       justify-content: center;
     }
   </style>
 </head>
 <body>
-  <div id="simulationContainer"></div>
+  <div id="sim">
+    <div id="simulationContainer"></div>
+  </div>
+  <div id="data">
+    <p>Day: <b id="dayCount"></b></p>
+    <p>Population size: <b id="popSize"></b></p>
+    <p>Healthy: <b id="healthyCount"></b></p>
+    <p>Infected: <b id="infectedCount"></b></p>
+    <p>Hospitalized: <b id="hospitalizedCount"></b></p>
+    <p>Death: <b id="deathCount"></b></p>
+    <p>Recovered: <b id="recoveredCount"></b></p>
+  </div>
   <script src="p5.js"></script>
   <script src="individual.js"></script>
   <script src="sim1.js"></script>

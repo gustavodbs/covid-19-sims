@@ -26,11 +26,9 @@ class Individual {
   }
 
   update() {
-    this.pos.add(this.vel)
-    
     switch(this.status) {
     case 'infected':
-      this.daysInfected += 0.05
+      this.daysInfected += frameDayProportion
       if(this.daysInfected > recoveryTime) {
         var p = Math.random();
         if (p > hospitalizationProb) {
@@ -44,7 +42,7 @@ class Individual {
       break;
     case 'hospitalized':
       this.vel = createVector(0, 0);
-      this.daysInfected += 0.05
+      this.daysInfected += frameDayProportion
       if(this.daysInfected > hospRecoveryTime) {
         this.status = Math.random() < hospDeathRate ? 'death' : 'recovered'
       }
@@ -52,6 +50,8 @@ class Individual {
     case 'death':
       this.vel = createVector(0, 0);
     }
+
+    this.pos.add(this.vel)
   }
 
   expose() {
